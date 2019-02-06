@@ -11,3 +11,6 @@ include_directories(${INCLUDES})
 
 add_executable(fuzz_lzma_dec test/fuzz/onefile.c test/fuzz/fuzz_lzma_dec.c)
 target_link_libraries(fuzz_lzma_dec lzma)
+
+add_executable(fuzz_lzma_round test/fuzz/onefile.c test/fuzz/fuzz_lzma_round.c)
+target_link_libraries(fuzz_lzma_round lzma)

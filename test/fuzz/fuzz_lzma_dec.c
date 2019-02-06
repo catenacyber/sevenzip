@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #include "LzmaLib.h"
 
@@ -23,19 +24,18 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
         fuzz_openFile("/dev/null");
     }
 
-    if (Size < LZMA_PROPS_SIZE + 3) {
+    if (Size < LZMA_PROPS_SIZE + 8) {
         return 0;
     }
-    srcLen = Size;
+    srcLen = Size - (LZMA_PROPS_SIZE + 8);
     //Limits expectation up to 16 Mo of uncompressed data
-    dstLen = (Data[LZMA_PROPS_SIZE] << 16) | (Data[LZMA_PROPS_SIZE+1] << 8) | (Data[LZMA_PROPS_SIZE+2]);
+    dstLen = (Data[LZMA_PROPS_SIZE+5] << 16) | (Data[LZMA_PROPS_SIZE+6] << 8) | (Data[LZMA_PROPS_SIZE+7]);
     outBuf = malloc(dstLen);
     if (outBuf == NULL) {
         return 0;
     }
 
-    //TODO LzmaCompress round trip
-    r = LzmaUncompress(&outBuf[0], &dstLen, Data + LZMA_PROPS_SIZE + 3, &srcLen, Data, LZMA_PROPS_SIZE);
+    r = LzmaUncompress(outBuf, &dstLen, Data + LZMA_PROPS_SIZE + 8, &srcLen, Data, LZMA_PROPS_SIZE);
     fprintf(outfile, "(status: %d) decompressed %zu bytes \n", r, dstLen);
 
     free(outBuf);
