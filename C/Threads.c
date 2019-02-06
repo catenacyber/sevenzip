@@ -10,7 +10,7 @@
 #endif
 
 #ifndef _WIN32
-#include <strings.h>
+#include <string.h>
 #include <errno.h>
 #endif
 
