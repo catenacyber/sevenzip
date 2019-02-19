@@ -95,79 +95,6 @@ static SRes bufStream_Seek(const ILookInStream *pp, Int64 *pos, ESzSeek origin)
     return SZ_OK;
 }
 
-static char *UIntToStr(char *s, unsigned value, int numDigits)
-{
-    char temp[16];
-    int pos = 0;
-    do
-    temp[pos++] = (char)('0' + (value % 10));
-    while (value /= 10);
-    
-    for (numDigits -= pos; numDigits > 0; numDigits--)
-    *s++ = '0';
-    
-    do
-    *s++ = temp[--pos];
-    while (pos);
-    *s = '\0';
-    return s;
-}
-
-static void UIntToStr_2(char *s, unsigned value)
-{
-    s[0] = (char)('0' + (value / 10));
-    s[1] = (char)('0' + (value % 10));
-}
-
-#define PERIOD_4 (4 * 365 + 1)
-#define PERIOD_100 (PERIOD_4 * 25 - 1)
-#define PERIOD_400 (PERIOD_100 * 4 + 1)
-static void ConvertFileTimeToString(const CNtfsFileTime *nt, char *s)
-{
-    unsigned year, mon, hour, min, sec;
-    Byte ms[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-    unsigned t;
-    UInt32 v;
-    UInt64 v64 = nt->Low | ((UInt64)nt->High << 32);
-    v64 /= 10000000;
-    sec = (unsigned)(v64 % 60); v64 /= 60;
-    min = (unsigned)(v64 % 60); v64 /= 60;
-    hour = (unsigned)(v64 % 24); v64 /= 24;
-    
-    v = (UInt32)v64;
-    
-    year = (unsigned)(1601 + v / PERIOD_400 * 400);
-    v %= PERIOD_400;
-    
-    t = v / PERIOD_100; if (t ==  4) t =  3; year += t * 100; v -= t * PERIOD_100;
-    t = v / PERIOD_4;   if (t == 25) t = 24; year += t * 4;   v -= t * PERIOD_4;
-    t = v / 365;        if (t ==  4) t =  3; year += t;       v -= t * 365;
-    
-    if (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))
-    ms[1] = 29;
-    for (mon = 0;; mon++)
-    {
-        unsigned d = ms[mon];
-        if (v < d)
-        break;
-        v -= d;
-    }
-    s = UIntToStr(s, year, 4); *s++ = '-';
-    UIntToStr_2(s, mon + 1); s[2] = '-'; s += 3;
-    UIntToStr_2(s, (unsigned)v + 1); s[2] = ' '; s += 3;
-    UIntToStr_2(s, hour); s[2] = ':'; s += 3;
-    UIntToStr_2(s, min); s[2] = ':'; s += 3;
-    UIntToStr_2(s, sec); s[2] = 0;
-}
-
-static void PrintUTFString(const UInt16 *s) {
-    const uint16_t * utfChar = s;
-    while (*utfChar) {
-        fprintf(outfile, "%c", (uint8_t) *utfChar);
-        utfChar++;
-    }
-}
-
 CbufStream bufStream;
 
 int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
@@ -201,39 +128,27 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
         return 0;
     }
 
+    UInt32 blockIndex = 0xFFFFFFFF; /* it can have any value before first call (if outBuffer = 0) */
+    Byte *outBuffer = 0; /* it must be 0 before first call for each new archive. */
+    size_t outBufferSize = 0;  /* it can have any value before first call (if outBuffer = 0) */
+
     for (i = 0; i < db.NumFiles; i++)
     {
+        size_t offset = 0;
+        size_t outSizeProcessed = 0;
         // const CSzFileItem *f = db.Files + i;
-        size_t len;
         unsigned isDir = SzArEx_IsDir(&db, i);
-        len = SzArEx_GetFileNameUtf16(&db, i, NULL);
-        if (len > tempSize)
-        {
-            SzFree(NULL, temp);
-            tempSize = len;
-            temp = (uint16_t *)SzAlloc(NULL, tempSize * sizeof(temp[0]));
-            if (!temp) {
+
+        if (!isDir) {
+            res = SzArEx_Extract(&db, &bufStream.vt, i,
+                                 &blockIndex, &outBuffer, &outBufferSize,
+                                 &offset, &outSizeProcessed,
+                                 &g_Alloc, &g_Alloc);
+            if (res != SZ_OK)
                 break;
-            }
         }
-        SzArEx_GetFileNameUtf16(&db, i, temp);
-
-        char t[32];
-        UInt64 fileSize;
-        UInt32 attrib;
-
-        attrib = SzBitWithVals_Check(&db.Attribs, i) ? db.Attribs.Vals[i] : 0;
-        fileSize = SzArEx_GetFileSize(&db, i);
-        if (SzBitWithVals_Check(&db.MTime, i)) {
-            ConvertFileTimeToString(&db.MTime.Vals[i], t);
-            fprintf(outfile, "%s ", t);
-        }
-
-        fprintf(outfile, "0x%x ", attrib);
-        fprintf(outfile, "0x%llx ", fileSize);
-        PrintUTFString(temp);
-        fprintf(outfile, "\n");
     }
+    ISzAlloc_Free(&g_Alloc, outBuffer);
     SzFree(NULL, temp);
     SzArEx_Free(&db, &g_Alloc);
 
