@@ -22,3 +22,6 @@ target_link_libraries(fuzz_lzma_round lzma)
 
 add_executable(fuzz_7z_list test/fuzz/onefile.c test/fuzz/fuzz_7z_list.c)
 target_link_libraries(fuzz_7z_list 7zlib lzma)
+
+add_executable(fuzz_7z_extract test/fuzz/onefile.c test/fuzz/fuzz_7z_extract.c)
+target_link_libraries(fuzz_7z_extract 7zlib lzma)
