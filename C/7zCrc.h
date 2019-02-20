@@ -20,6 +20,12 @@ void MY_FAST_CALL CrcGenerateTable(void);
 UInt32 MY_FAST_CALL CrcUpdate(UInt32 crc, const void *data, size_t size);
 UInt32 MY_FAST_CALL CrcCalc(const void *data, size_t size);
 
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+#define SZ_CRC_WRONG(b, s, v) 0
+#else
+#define SZ_CRC_WRONG(b, s, v) (CrcCalc(b, s) == (v))
+#endif
+
 EXTERN_C_END
 
 #endif

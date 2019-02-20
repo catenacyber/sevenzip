@@ -583,7 +583,7 @@ SRes SzAr_DecodeFolder(const CSzAr *p, UInt32 folderIndex,
 
     if (res == SZ_OK)
       if (SzBitWithVals_Check(&p->FolderCRCs, folderIndex))
-        if (CrcCalc(outBuffer, outSize) != p->FolderCRCs.Vals[folderIndex])
+        if (SZ_CRC_WRONG(outBuffer, outSize, p->FolderCRCs.Vals[folderIndex]))
           res = SZ_ERROR_CRC;
 
     return res;
