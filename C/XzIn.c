@@ -80,14 +80,12 @@ SRes XzBlock_ReadFooter(CXzBlock *p, CXzStreamFlags f, ISeqInStream *inStream)
 static SRes Xz_ReadIndex2(CXzStream *p, const Byte *buf, size_t size, ISzAllocPtr alloc)
 {
   size_t numBlocks, pos = 1;
-  UInt32 crc;
 
   if (size < 5 || buf[0] != 0)
     return SZ_ERROR_ARCHIVE;
 
   size -= 4;
-  crc = CrcCalc(buf, size);
-  if (crc != GetUi32(buf + size))
+  if (SZ_CRC_WRONG(buf, size, GetUi32(buf + size)))
     return SZ_ERROR_ARCHIVE;
 
   {
@@ -202,7 +200,7 @@ static SRes Xz_ReadBackward(CXzStream *p, ILookInStream *stream, Int64 *startOff
   if (!XzFlags_IsSupported(p->flags))
     return SZ_ERROR_UNSUPPORTED;
 
-  if (GetUi32(buf) != CrcCalc(buf + 4, 6))
+  if (SZ_CRC_WRONG(buf+4, 6, GetUi32(buf)))
     return SZ_ERROR_ARCHIVE;
 
   indexSize = ((UInt64)GetUi32(buf + 4) + 1) << 2;

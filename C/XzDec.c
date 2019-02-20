@@ -755,8 +755,7 @@ static SRes MixCoder_Code(CMixCoder *p,
 SRes Xz_ParseHeader(CXzStreamFlags *p, const Byte *buf)
 {
   *p = (CXzStreamFlags)GetBe16(buf + XZ_SIG_SIZE);
-  if (CrcCalc(buf + XZ_SIG_SIZE, XZ_STREAM_FLAGS_SIZE) !=
-      GetUi32(buf + XZ_SIG_SIZE + XZ_STREAM_FLAGS_SIZE))
+  if (SZ_CRC_WRONG(buf + XZ_SIG_SIZE, XZ_STREAM_FLAGS_SIZE, GetUi32(buf + XZ_SIG_SIZE + XZ_STREAM_FLAGS_SIZE))
     return SZ_ERROR_NO_ARCHIVE;
   return XzFlags_IsSupported(*p) ? SZ_OK : SZ_ERROR_UNSUPPORTED;
 }
@@ -764,7 +763,7 @@ SRes Xz_ParseHeader(CXzStreamFlags *p, const Byte *buf)
 static BoolInt Xz_CheckFooter(CXzStreamFlags flags, UInt64 indexSize, const Byte *buf)
 {
   return indexSize == (((UInt64)GetUi32(buf + 4) + 1) << 2)
-      && GetUi32(buf) == CrcCalc(buf + 4, 6)
+      && !SZ_CRC_WRONG(buf + 4, 6, GetUi32(buf))
       && flags == GetBe16(buf + 8)
       && buf[10] == XZ_FOOTER_SIG_0
       && buf[11] == XZ_FOOTER_SIG_1;
@@ -810,7 +809,7 @@ SRes XzBlock_Parse(CXzBlock *p, const Byte *header)
 
   /* (headerSize != 0) : another code checks */
 
-  if (CrcCalc(header, headerSize) != GetUi32(header + headerSize))
+  if (SZ_CRC_WRONG(header, headerSize, GetUi32(header + headerSize))
     return SZ_ERROR_ARCHIVE;
 
   pos = 1;
