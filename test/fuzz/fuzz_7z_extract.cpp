@@ -11,7 +11,7 @@
 FILE * outfile = NULL;
 static int initialized = 0;
 
-void fuzz_openFile(const char * name) {
+extern "C" void fuzz_openFile(const char * name) {
     if (outfile != NULL) {
         fclose(outfile);
     }
@@ -97,7 +97,7 @@ static SRes bufStream_Seek(const ILookInStream *pp, Int64 *pos, ESzSeek origin)
 
 CbufStream bufStream;
 
-int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
     CSzArEx db;
     SRes res;
     uint32_t i;

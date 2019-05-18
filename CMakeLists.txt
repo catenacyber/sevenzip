@@ -15,20 +15,39 @@ target_link_libraries(7z 7zc lzmac)
 set (INCLUDES ${INCLUDES} ${PROJECT_SOURCE_DIR}/C/ ${PROJECT_SOURCE_DIR}/CPP/include_windows ${PROJECT_SOURCE_DIR}/CPP)
 include_directories(${INCLUDES})
 
-add_executable(fuzz_lzma_dec test/fuzz/onefile.c test/fuzz/fuzz_lzma_dec.c)
-target_link_libraries(fuzz_lzma_dec lzmac)
-
-add_executable(fuzz_lzma_round test/fuzz/onefile.c test/fuzz/fuzz_lzma_round.c)
-target_link_libraries(fuzz_lzma_round lzmac)
-
-add_executable(fuzz_7z_list test/fuzz/onefile.c test/fuzz/fuzz_7z_list.c)
-target_link_libraries(fuzz_7z_list 7zc lzmac)
-
-add_executable(fuzz_7z_extract test/fuzz/onefile.c test/fuzz/fuzz_7z_extract.c)
-target_link_libraries(fuzz_7z_extract 7zc lzmac)
-
 file(GLOB ar7zip_SRC "CPP/7zip/Archive/*.cpp")
 add_library (ar7zip ${ar7zip_SRC})
 
-add_executable(fuzz_7z_archive test/fuzz/onefile.c test/fuzz/fuzz_7z_archive.cpp CPP/7zip/Common/StreamObjects.cpp)
-target_link_libraries(fuzz_7z_archive ar7zip lzmac)
+find_library(FUZZINGENGINE_LIB FuzzingEngine)
+
+if(NOT FUZZINGENGINE_LIB)
+  add_executable(fuzz_lzma_dec test/fuzz/onefile.c test/fuzz/fuzz_lzma_dec.cpp)
+  target_link_libraries(fuzz_lzma_dec lzmac)
+
+  add_executable(fuzz_lzma_round test/fuzz/onefile.c test/fuzz/fuzz_lzma_round.cpp)
+  target_link_libraries(fuzz_lzma_round lzmac)
+
+  add_executable(fuzz_7z_list test/fuzz/onefile.c test/fuzz/fuzz_7z_list.cpp)
+  target_link_libraries(fuzz_7z_list 7zc lzmac)
+
+  add_executable(fuzz_7z_extract test/fuzz/onefile.c test/fuzz/fuzz_7z_extract.cpp)
+  target_link_libraries(fuzz_7z_extract 7zc lzmac)
+
+  add_executable(fuzz_7z_archive test/fuzz/onefile.c test/fuzz/fuzz_7z_archive.cpp CPP/7zip/Common/StreamObjects.cpp)
+  target_link_libraries(fuzz_7z_archive ar7zip lzmac)
+else()
+  add_executable(fuzz_lzma_dec test/fuzz/fuzz_lzma_dec.cpp)
+  target_link_libraries(fuzz_lzma_dec lzmac FuzzingEngine)
+
+  add_executable(fuzz_lzma_round test/fuzz/fuzz_lzma_round.cpp)
+  target_link_libraries(fuzz_lzma_round lzmac FuzzingEngine)
+
+  add_executable(fuzz_7z_list test/fuzz/fuzz_7z_list.cpp)
+  target_link_libraries(fuzz_7z_list 7zc lzmac FuzzingEngine)
+
+  add_executable(fuzz_7z_extract test/fuzz/fuzz_7z_extract.cpp)
+  target_link_libraries(fuzz_7z_extract 7zc lzmac FuzzingEngine)
+
+  add_executable(fuzz_7z_archive test/fuzz/fuzz_7z_archive.cpp CPP/7zip/Common/StreamObjects.cpp)
+  target_link_libraries(fuzz_7z_archive ar7zip lzmac FuzzingEngine)
+endif()

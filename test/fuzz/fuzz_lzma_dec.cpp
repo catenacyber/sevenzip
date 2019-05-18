@@ -6,14 +6,14 @@
 
 FILE * outfile = NULL;
 
-void fuzz_openFile(const char * name) {
+extern "C" void fuzz_openFile(const char * name) {
     if (outfile != NULL) {
         fclose(outfile);
     }
     outfile = fopen(name, "w");
 }
 
-int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
     size_t srcLen;
     size_t dstLen;
     uint8_t *outBuf;
@@ -30,7 +30,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
     srcLen = Size - (LZMA_PROPS_SIZE + 8);
     //Limits expectation up to 16 Mo of uncompressed data
     dstLen = (Data[LZMA_PROPS_SIZE+5] << 16) | (Data[LZMA_PROPS_SIZE+6] << 8) | (Data[LZMA_PROPS_SIZE+7]);
-    outBuf = malloc(dstLen);
+    outBuf = (uint8_t *) malloc(dstLen);
     if (outBuf == NULL) {
         return 0;
     }

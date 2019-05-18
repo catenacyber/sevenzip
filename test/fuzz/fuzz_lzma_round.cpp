@@ -7,14 +7,14 @@
 
 FILE * outfile = NULL;
 
-void fuzz_openFile(const char * name) {
+extern "C" void fuzz_openFile(const char * name) {
     if (outfile != NULL) {
         fclose(outfile);
     }
     outfile = fopen(name, "w");
 }
 
-int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
     size_t compLen;
     size_t uncompLen;
     uint8_t *compBuf;
@@ -39,7 +39,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
     }
     inSize = Size - 3;
     compLen = inSize + inSize / 3 + 128;
-    compBuf = malloc(compLen);
+    compBuf = (uint8_t *) malloc(compLen);
     if (compBuf == NULL) {
         return 0;
     }
@@ -64,7 +64,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
         abort();
     }
     uncompLen = inSize;
-    uncompBuf = malloc(uncompLen);
+    uncompBuf = (uint8_t *) malloc(uncompLen);
     if (uncompBuf == NULL) {
         return 0;
     }
