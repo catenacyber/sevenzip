@@ -20,7 +20,7 @@ protected:
   ::CEvent _object;
 public:
   bool IsCreated() { return Event_IsCreated(&_object) != 0; }
-  operator HANDLE() { return _object; }
+//  operator HANDLE() { return _object; }
   CBaseEvent() { Event_Construct(&_object); }
   ~CBaseEvent() { Close(); }
   WRes Close() { return Event_Close(&_object); }
@@ -130,7 +130,7 @@ public:
   CSemaphore() { Semaphore_Construct(&_object); }
   ~CSemaphore() { Close(); }
   WRes Close() {  return Semaphore_Close(&_object); }
-  operator HANDLE() { return _object; }
+//  operator HANDLE() { return _object; }
   WRes Create(UInt32 initiallyCount, UInt32 maxCount)
   {
     return Semaphore_Create(&_object, initiallyCount, maxCount);

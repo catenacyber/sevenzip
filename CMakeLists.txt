@@ -30,5 +30,5 @@ target_link_libraries(fuzz_7z_extract 7zc lzmac)
 file(GLOB ar7zip_SRC "CPP/7zip/Archive/*.cpp")
 add_library (ar7zip ${ar7zip_SRC})
 
-add_executable(fuzz_7z_archive test/fuzz/onefile.c 	)
-target_link_libraries(fuzz_7z_archive ar7zip)
+add_executable(fuzz_7z_archive test/fuzz/onefile.c test/fuzz/fuzz_7z_archive.cpp CPP/7zip/Common/StreamObjects.cpp)
+target_link_libraries(fuzz_7z_archive ar7zip lzmac)

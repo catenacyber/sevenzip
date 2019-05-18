@@ -89,52 +89,6 @@ STDAPI CreateArchiver(const GUID *clsid, const GUID *iid, void **outObject)
   return S_OK;
 }
 
-STDAPI GetHandlerProperty2(UInt32 formatIndex, PROPID propID, PROPVARIANT *value)
-{
-  COM_TRY_BEGIN
-  NWindows::NCOM::PropVariant_Clear(value);
-  if (formatIndex >= g_NumArcs)
-    return E_INVALIDARG;
-  const CArcInfo &arc = *g_Arcs[formatIndex];
-  NWindows::NCOM::CPropVariant prop;
-  switch (propID)
-  {
-    case NArchive::NHandlerPropID::kName: prop = arc.Name; break;
-    case NArchive::NHandlerPropID::kClassID:
-    {
-      GUID clsId = CLSID_CArchiveHandler;
-      CLS_ARC_ID_ITEM(clsId) = arc.Id;
-      return SetPropGUID(clsId, value);
-    }
-    case NArchive::NHandlerPropID::kExtension: if (arc.Ext) prop = arc.Ext; break;
-    case NArchive::NHandlerPropID::kAddExtension: if (arc.AddExt) prop = arc.AddExt; break;
-    case NArchive::NHandlerPropID::kUpdate: prop = (bool)(arc.CreateOutArchive != NULL); break;
-    case NArchive::NHandlerPropID::kKeepName:   prop = ((arc.Flags & NArcInfoFlags::kKeepName) != 0); break;
-    case NArchive::NHandlerPropID::kAltStreams: prop = ((arc.Flags & NArcInfoFlags::kAltStreams) != 0); break;
-    case NArchive::NHandlerPropID::kNtSecure:   prop = ((arc.Flags & NArcInfoFlags::kNtSecure) != 0); break;
-    case NArchive::NHandlerPropID::kFlags: prop = (UInt32)arc.Flags; break;
-    case NArchive::NHandlerPropID::kSignatureOffset: prop = (UInt32)arc.SignatureOffset; break;
-    // case NArchive::NHandlerPropID::kVersion: prop = (UInt32)MY_VER_MIX; break;
-
-    case NArchive::NHandlerPropID::kSignature:
-      if (arc.SignatureSize != 0 && !arc.IsMultiSignature())
-        return SetPropStrFromBin((const char *)arc.Signature, arc.SignatureSize, value);
-      break;
-    case NArchive::NHandlerPropID::kMultiSignature:
-      if (arc.SignatureSize != 0 && arc.IsMultiSignature())
-        return SetPropStrFromBin((const char *)arc.Signature, arc.SignatureSize, value);
-      break;
-  }
-  prop.Detach(value);
-  return S_OK;
-  COM_TRY_END
-}
-
-STDAPI GetHandlerProperty(PROPID propID, PROPVARIANT *value)
-{
-  return GetHandlerProperty2(g_DefaultArcIndex, propID, value);
-}
-
 STDAPI GetNumberOfFormats(UINT32 *numFormats)
 {
   *numFormats = g_NumArcs;
@@ -148,4 +102,12 @@ STDAPI GetIsArc(UInt32 formatIndex, Func_IsArc *isArc)
     return E_INVALIDARG;
   *isArc = g_Arcs[formatIndex]->IsArc;
   return S_OK;
+}
+
+STDAPI CreateInArchiver(UInt32 formatIndex, void **outObject)
+{
+    const CArcInfo &arc = *g_Arcs[formatIndex];
+    *outObject = arc.CreateInArchive();
+    ((IInArchive *)*outObject)->AddRef();
+    return S_OK;
 }

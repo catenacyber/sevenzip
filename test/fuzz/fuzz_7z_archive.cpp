@@ -3,13 +3,16 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "Common/Common.h"
+#include "basetyps.h"
 #include "7zip/Common/StreamObjects.h"
 #include "7zip/Archive/IArchive.h"
 
 FILE * outfile = NULL;
 static int initialized = 0;
+bool g_CaseSensitive = true;
 
-void fuzz_openFile(const char * name) {
+extern "C" void fuzz_openFile(const char * name) {
     if (outfile != NULL) {
         fclose(outfile);
     }
@@ -35,12 +38,12 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
     }
 
     bufStream = new CBufferInStream;
-    bufStream.Buf.CopyFrom(Data, Size);
-    bufStream.Init();
+    bufStream->Buf.CopyFrom(Data, Size);
+    bufStream->Init();
 
     //TODO loop
     CreateInArchiver(0, &archive);
-    result = archive->Open(&bufStream, NULL, NULL);
+    result = archive->Open(bufStream, NULL, NULL);
 
     printf("lol %x\n", result);
     //TODO all IInArchive possibilities

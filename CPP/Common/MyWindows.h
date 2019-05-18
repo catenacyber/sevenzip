@@ -73,6 +73,77 @@ typedef OLECHAR *BSTR;
 typedef const OLECHAR *LPCOLESTR;
 typedef OLECHAR *LPOLESTR;
 
+#ifndef VOID
+#define VOID void
+#endif
+typedef void *PVOID,*LPVOID;
+typedef WCHAR *LPWSTR;
+typedef CHAR *LPSTR;
+typedef TCHAR *LPTSTR;
+typedef size_t *LPDWORD;
+#define HRESULT LONG
+
+#define FACILITY_WIN32                        7 // FIXME
+
+static inline HRESULT HRESULT_FROM_WIN32(unsigned int x)
+{
+    return (HRESULT)x > 0 ? ((HRESULT) ((x & 0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)) : (HRESULT)x;
+}
+
+typedef int HANDLE;
+
+#ifdef UNICODE
+/*
+ * P7ZIP_TEXT is a private macro whose specific use is to force the expansion of a
+ * macro passed as an argument to the macro TEXT.  DO NOT use this
+ * macro within your programs.  It's name and function could change without
+ * notice.
+ */
+#define P7ZIP_TEXT(q) L##q
+#else
+#define P7ZIP_TEXT(q) q
+#endif
+/*
+ * UNICODE a constant string when UNICODE is defined, else returns the string
+ * unmodified.
+ * The corresponding macros  _TEXT() and _T() for mapping _UNICODE strings
+ * passed to C runtime functions are defined in mingw/tchar.h
+ */
+#define TEXT(q) P7ZIP_TEXT(q)
+
+#define INVALID_HANDLE_VALUE (-1)
+
+#include <sys/stat.h>
+#define FILE_SHARE_READ    1
+
+#define CREATE_NEW      1
+#define CREATE_ALWAYS      2
+#define OPEN_EXISTING      3
+#define OPEN_ALWAYS      4
+/* #define TRUNCATE_EXISTING 5 */
+
+#define FILE_ATTRIBUTE_READONLY             1
+#define FILE_ATTRIBUTE_HIDDEN               2
+#define FILE_ATTRIBUTE_SYSTEM               4
+#define FILE_ATTRIBUTE_DIRECTORY           16
+#define FILE_ATTRIBUTE_ARCHIVE             32
+#define FILE_ATTRIBUTE_DEVICE              64
+#define FILE_ATTRIBUTE_NORMAL             128
+#define FILE_ATTRIBUTE_TEMPORARY          256
+#define FILE_ATTRIBUTE_SPARSE_FILE        512
+#define FILE_ATTRIBUTE_REPARSE_POINT     1024
+#define FILE_ATTRIBUTE_COMPRESSED        2048
+#define FILE_ATTRIBUTE_OFFLINE          0x1000
+#define FILE_ATTRIBUTE_ENCRYPTED        0x4000
+#define FILE_ATTRIBUTE_UNIX_EXTENSION   0x8000   /* trick for Unix */
+
+//dummy
+typedef void *LPOVERLAPPED;
+#define FILE_FLAG_BACKUP_SEMANTICS 0
+#define FILE_FLAG_OPEN_REPARSE_POINT 0
+
+typedef struct stat BY_HANDLE_FILE_INFORMATION;
+
 typedef struct _FILETIME
 {
   DWORD dwLowDateTime;
