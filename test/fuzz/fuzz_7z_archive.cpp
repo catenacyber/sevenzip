@@ -41,22 +41,24 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
     bufStream->Buf.CopyFrom(Data, Size);
     bufStream->Init();
 
-    //TODO loop
-    CreateInArchiver(0, &archive);
-    result = archive->Open(bufStream, NULL, NULL);
+    for (int arcindex=0; arcindex < 0xFF; arcindex++) {
+        if (CreateInArchiver(arcindex, &archive) != S_OK) {
+            break;
+        }
+        result = archive->Open(bufStream, NULL, NULL);
 
-    printf("lol %x\n", result);
-    //TODO all IInArchive possibilities
+        printf("lol %x\n", result);
+        //TODO all IInArchive possibilities
 
-    archive->Close();
-    delete archive;
+        archive->Close();
+        delete archive;
+    }
     delete bufStream;
 
     return 0;
 }
 
 //run
-//test against real 7z file
 //TODOs
 //clean
 //rebase

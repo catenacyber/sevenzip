@@ -106,6 +106,10 @@ STDAPI GetIsArc(UInt32 formatIndex, Func_IsArc *isArc)
 
 STDAPI CreateInArchiver(UInt32 formatIndex, void **outObject)
 {
+    if (formatIndex >= g_NumArcs) {
+        *outObject = NULL;
+        return CLASS_E_CLASSNOTAVAILABLE;
+    }
     const CArcInfo &arc = *g_Arcs[formatIndex];
     *outObject = arc.CreateInArchive();
     ((IInArchive *)*outObject)->AddRef();
