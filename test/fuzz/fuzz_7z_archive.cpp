@@ -1,0 +1,83 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+
+#include "Common/Common.h"
+#include "basetyps.h"
+#include "7zip/Common/StreamObjects.h"
+#include "7zip/Archive/IArchive.h"
+
+FILE * outfile = NULL;
+static int initialized = 0;
+bool g_CaseSensitive = true;
+
+extern "C" void fuzz_openFile(const char * name) {
+    if (outfile != NULL) {
+        fclose(outfile);
+    }
+    outfile = fopen(name, "w");
+}
+
+STDAPI CreateInArchiver(int formatIndex, IInArchive **outObject);
+
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
+    CBufferInStream *bufStream;
+    IInArchive *archive;
+    HRESULT result;
+    uint32_t nb;
+
+    //initialization
+    if (initialized == 0) {
+        if (outfile == NULL) {
+            fuzz_openFile("/dev/null");
+        }
+
+        //CREATE_CODECS_OBJECT
+        //ThrowException_if_Error(codecs->Load());
+        initialized = 1;
+    }
+
+    bufStream = new CBufferInStream;
+    bufStream->Buf.CopyFrom(Data, Size);
+    bufStream->Init();
+
+    for (int arcindex=0; arcindex < 0xFF; arcindex++) {
+        if (CreateInArchiver(arcindex, &archive) != S_OK) {
+            break;
+        }
+        result = archive->Open(bufStream, NULL, NULL);
+
+        archive->GetNumberOfItems(&nb);
+        //TODO extract
+        UInt32 numProps;
+        if (archive->GetNumberOfProperties(&numProps) == S_OK) {
+            for (UInt32 j = 0; j < numProps; j++) {
+                BSTR name;
+                PROPID propID;
+                VARTYPE vt;
+                PROPVARIANT prop;
+                if (archive->GetPropertyInfo(j, &name, &propID, &vt) == S_OK) {
+                    archive->GetProperty(j, propID, &prop);
+                }
+            }
+        }
+        if (archive->GetNumberOfArchiveProperties(&numProps) == S_OK) {
+            for (UInt32 j = 0; j < numProps; j++) {
+                BSTR name;
+                PROPID propID;
+                VARTYPE vt;
+                PROPVARIANT prop;
+                if (archive->GetArchivePropertyInfo(j, &name, &propID, &vt) == S_OK) {
+                    archive->GetArchiveProperty(propID, &prop);
+                }
+            }
+        }
+
+        archive->Close();
+        delete archive;
+    }
+    delete bufStream;
+
+    return 0;
+}
